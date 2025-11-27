@@ -97,7 +97,7 @@ Untuk test aplikasi:
    - Login dengan akun admin
    - Akan masuk ke Admin Dashboard
 
-### 7. Next Steps
+### 7. Next Stepz
 
 - [ ] Implementasi fitur manajemen user di Admin Dashboard
 - [ ] Tambah validasi role di backend (RLS policies)
