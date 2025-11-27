@@ -17,6 +17,9 @@ import 'features/class/presentation/providers/class_provider.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
 import 'presentation/pages/dashboard_page.dart';
+import 'presentation/pages/student_dashboard_page.dart';
+import 'presentation/pages/mentor_dashboard_page.dart';
+import 'presentation/pages/admin_dashboard_page.dart';
 import 'presentation/pages/home_page.dart';
 import 'features/class/presentation/pages/create_class_page.dart';
 
@@ -70,9 +73,11 @@ class MyApp extends StatelessWidget {
           '/': (context) => const HomePage(),
           '/login': (context) => const LoginPage(),
           '/register': (context) => const RegisterPage(),
-          '/dashboard': (context) => const DashboardPage(),
-          '/create-class': (context) => const CreateClassPage(), // Rute untuk halaman buat kelas
-          // Nanti kita tambahkan rute '/create-class' dll di sini
+          '/dashboard': (context) => const DashboardPage(), // Legacy route
+          '/student-dashboard': (context) => const StudentDashboardPage(),
+          '/mentor-dashboard': (context) => const MentorDashboardPage(),
+          '/admin-dashboard': (context) => const AdminDashboardPage(),
+          '/create-class': (context) => const CreateClassPage(),
         },
       ),
     );

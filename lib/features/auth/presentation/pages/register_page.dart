@@ -29,7 +29,7 @@ class _RegisterPageState extends State<RegisterPage> {
   // Variabel state
   bool _obscureText = true; // Untuk sembunyikan password
   String? _selectedGender; // Untuk menyimpan pilihan Gender
-  String? _selectedRole; // Untuk menyimpan pilihan Role
+  // Role dihapus dari form, default 'student'
 
   @override
   void dispose() {
@@ -129,8 +129,9 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
-                              if (value!.isEmpty)
+                              if (value!.isEmpty) {
                                 return 'Email tidak boleh kosong';
+                              }
                               if (!RegExp(
                                 r'^[^@]+@[^@]+\.[^@]+',
                               ).hasMatch(value)) {
@@ -162,10 +163,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             obscureText: _obscureText,
                             validator: (value) {
-                              if (value!.isEmpty)
+                              if (value!.isEmpty) {
                                 return 'Password tidak boleh kosong';
-                              if (value.length < 6)
+                              }
+                              if (value.length < 6) {
                                 return 'Password minimal 6 karakter';
+                              }
                               return null;
                             },
                           ),
@@ -205,7 +208,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
                           // 6. Gender
                           DropdownButtonFormField<String>(
-                            value: _selectedGender,
                             decoration: const InputDecoration(
                               labelText: 'Gender',
                               border: OutlineInputBorder(),
@@ -229,34 +231,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                 value == null ? 'Pilih gender' : null,
                           ),
 
-                          const SizedBox(height: 16),
-
-                          // 7. Role
-                          DropdownButtonFormField<String>(
-                            value: _selectedRole,
-                            decoration: const InputDecoration(
-                              labelText: 'Role',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'student',
-                                child: Text('Student'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'mentor',
-                                child: Text('Mentor'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedRole = value;
-                              });
-                            },
-                            validator: (value) =>
-                                value == null ? 'Pilih role' : null,
-                          ),
-
                           const SizedBox(height: 24),
 
                           // Tombol Registrasi
@@ -272,40 +246,38 @@ class _RegisterPageState extends State<RegisterPage> {
                                           .register(
                                             _nameController.text, // 1. Nama
                                             _emailController.text, // 2. Email
-                                            _passwordController
-                                                .text, // 3. Password
+                                            _passwordController.text, // 3. Password
                                             _hpController.text, // 4. No HP
                                             _selectedGender!, // 5. Gender
-                                            _tanggalLahirController
-                                                .text, // 6. Tgl Lahir
-                                            _selectedRole!, // 7. Role
+                                            _tanggalLahirController.text, // 6. Tgl Lahir
                                           )
                                           .then((success) {
-                                            // Cek Hasil (Sukses / Gagal)
+                                            if (!context.mounted) return;
+                                            
                                             if (success) {
-                                              // Jika Sukses -> Pindah ke Dashboard
-                                              Navigator.pushReplacementNamed(
-                                                context,
-                                                '/dashboard',
-                                              );
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
+                                              // Redirect ke dashboard sesuai role
+                                              final userRole = provider.user?.role ?? 'student';
+                                              String route = '/dashboard';
+                                              
+                                              if (userRole == 'admin') {
+                                                route = '/admin-dashboard';
+                                              } else if (userRole == 'mentor') {
+                                                route = '/mentor-dashboard';
+                                              } else {
+                                                route = '/student-dashboard';
+                                              }
+                                              
+                                              Navigator.pushReplacementNamed(context, route);
+                                              ScaffoldMessenger.of(context).showSnackBar(
                                                 const SnackBar(
-                                                  content: Text(
-                                                    'Registrasi berhasil!',
-                                                  ),
+                                                  content: Text('Registrasi berhasil!'),
                                                 ),
                                               );
                                             } else {
-                                              // Jika Gagal
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
+                                              ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                    provider.errorMessage ??
-                                                        'Registrasi gagal',
+                                                    provider.errorMessage ?? 'Registrasi gagal',
                                                   ),
                                                   backgroundColor: Colors.red,
                                                 ),

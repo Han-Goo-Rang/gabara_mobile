@@ -192,17 +192,24 @@ class _LoginPageState extends State<LoginPage> {
                                         final success = await authProvider
                                             .login(email, password);
 
-                                        if (!context.mounted)
+                                        if (!context.mounted) {
                                           return; // Cek apakah widget masih aktif
+                                        }
 
                                         if (success) {
-                                          // 3. Redirect ke Dashboard
-                                          // Karena AuthProvider sudah menyimpan data user & role,
-                                          // Dashboard nanti tinggal membacanya.
-                                          Navigator.pushReplacementNamed(
-                                            context,
-                                            '/dashboard',
-                                          );
+                                          // 3. Redirect ke Dashboard sesuai role
+                                          final userRole = authProvider.user?.role ?? 'student';
+                                          String route = '/dashboard';
+                                          
+                                          if (userRole == 'admin') {
+                                            route = '/admin-dashboard';
+                                          } else if (userRole == 'mentor') {
+                                            route = '/mentor-dashboard';
+                                          } else {
+                                            route = '/student-dashboard';
+                                          }
+                                          
+                                          Navigator.pushReplacementNamed(context, route);
                                         } else {
                                           // 4. Tampilkan Error
                                           ScaffoldMessenger.of(
