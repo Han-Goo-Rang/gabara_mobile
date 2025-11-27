@@ -42,12 +42,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Fungsi Register (DIPERBAIKI)
+  // Fungsi Register (DIPERBAIKI - Default role 'student')
   Future<bool> register(
     String name,
     String email,
     String password,
-    String role, 
     String phone, 
     String gender,
     String birthDate,
@@ -57,15 +56,15 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // KOREKSI: Langsung kirim semua argumen berurutan, tanpa RegisterParams
+      // Default role adalah 'student'
       final result = await registerUser.call(
         name,
         email,
         password,
-        role, 
         phone, 
         gender,
         birthDate,
+        'student', // Default role
       );
 
       _user = result;
