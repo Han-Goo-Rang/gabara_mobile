@@ -17,13 +17,30 @@ class ClassProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  // Fetch enrolled classes (for student)
   Future<void> fetchClasses() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _classes = await classService.getClasses();
+      _classes = await classService.getEnrolledClasses();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Fetch classes created by mentor
+  Future<void> fetchMyClasses() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _classes = await classService.getMyClasses();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -58,7 +75,8 @@ class ClassProvider extends ChangeNotifier {
         subjectId: subjectId,
         maxStudents: maxStudents,
       );
-      await fetchClasses(); 
+      // Refresh kelas mentor setelah create
+      await fetchMyClasses();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -68,7 +86,55 @@ class ClassProvider extends ChangeNotifier {
     }
   }
 
-  // --- FUNGSI BARU: JOIN CLASS ---
+  // Update class
+  Future<bool> updateClass({
+    required String classId,
+    required String name,
+    required String description,
+    required int subjectId,
+    required int maxStudents,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await classService.updateClass(
+        classId: classId,
+        name: name,
+        description: description,
+        subjectId: subjectId,
+        maxStudents: maxStudents,
+      );
+      await fetchMyClasses();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Delete class
+  Future<bool> deleteClass(String classId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await classService.deleteClass(classId);
+      await fetchMyClasses();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Join class by code (for student)
   Future<bool> joinClass(String classCode) async {
     _isLoading = true;
     _errorMessage = null;
@@ -76,7 +142,7 @@ class ClassProvider extends ChangeNotifier {
 
     try {
       await classService.joinClass(classCode);
-      await fetchClasses(); // Refresh list kelas setelah join
+      await fetchClasses();
       return true;
     } catch (e) {
       _errorMessage = "Kode kelas tidak valid atau sudah bergabung.";

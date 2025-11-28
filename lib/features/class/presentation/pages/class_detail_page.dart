@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/class_entity.dart';
-import '../widgets/class_tabs_dummy.dart'; 
+import '../widgets/class_tabs_dummy.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class ClassDetailPage extends StatefulWidget {
@@ -12,7 +12,8 @@ class ClassDetailPage extends StatefulWidget {
   State<ClassDetailPage> createState() => _ClassDetailPageState();
 }
 
-class _ClassDetailPageState extends State<ClassDetailPage> with SingleTickerProviderStateMixin {
+class _ClassDetailPageState extends State<ClassDetailPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -45,11 +46,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> with SingleTickerProv
                   children: [
                     // Background Image (Peta Merah dummy)
                     Image.asset(
-                      'assets/indonesia.png', 
+                      'assets/indonesia.png',
                       fit: BoxFit.cover,
-                      color: Colors.red.withOpacity(0.8),
+                      color: Colors.red.withValues(alpha: 0.8),
                       colorBlendMode: BlendMode.srcATop,
-                      errorBuilder: (ctx, err, stack) => Container(color: primaryBlue),
+                      errorBuilder: (ctx, err, stack) =>
+                          Container(color: primaryBlue),
                     ),
                     // Overlay Gradient
                     Container(
@@ -59,7 +61,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> with SingleTickerProv
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.7),
+                            Colors.black.withValues(alpha: 0.7),
                           ],
                         ),
                       ),
@@ -73,14 +75,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> with SingleTickerProv
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
                               "2025/2026",
-                              style: TextStyle(color: Colors.white, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 8),

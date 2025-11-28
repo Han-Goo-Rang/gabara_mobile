@@ -1,16 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-
-// Halaman-halaman ini perlu di-import dari lokasi baru mereka
-// import '../../features/quiz/presentation/pages/edit_quiz_page.dart';
-// import '../../features/class/presentation/pages/tutor_class_page.dart';
-// import '../pages/tutor_dashboard_page.dart';
-
-// Placeholder untuk halaman yang belum di-import
-Widget getTutorDashboardPage() => const Scaffold(body: Center(child: Text("Tutor Dashboard Page")));
-Widget getTutorClassPage() => const Scaffold(body: Center(child: Text("Tutor Class Page")));
-Widget getTutorQuizPage() => const Scaffold(body: Center(child: Text("Tutor Quiz Page")));
-
+import '../pages/mentor_dashboard_page.dart';
+import '../../features/class/presentation/pages/class_page.dart';
 
 class TutorAppDrawer extends StatelessWidget {
   final String? activeRoute;
@@ -19,68 +10,124 @@ class TutorAppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const String dashboardRoute = 'dashboard';
-    const String classRoute = 'class';
-    const String quizRoute = 'quiz';
-
     return Drawer(
       elevation: 0,
       child: Container(
-        color: accentBlue,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 52, 16, 16),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: Image.asset(
+        color: primaryBlue,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Logo
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset(
                     'assets/GabaraWhite.png',
-                    height: 50,
-                     errorBuilder: (context, error, stackTrace) =>
-                        const Text('GARASI BELAJAR', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    height: 45,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Text(
+                      'GABARA',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentOrange,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'MENTOR',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            _buildDrawerItem(
-              context: context,
-              icon: Icons.dashboard,
-              title: 'Dashboard',
-              isActive: activeRoute == dashboardRoute,
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => getTutorDashboardPage()),
-                );
-              },
+
+            // Menu Items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: <Widget>[
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.dashboard_outlined,
+                    title: 'Dashboard',
+                    routeKey: 'dashboard',
+                    onTap: () => _navigateTo(
+                      context,
+                      'dashboard',
+                      const MentorDashboardPage(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.book_outlined,
+                    title: 'Kelasku',
+                    routeKey: 'class',
+                    onTap: () =>
+                        _navigateTo(context, 'class', const ClassPage()),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.quiz_outlined,
+                    title: 'Kuis',
+                    routeKey: 'quiz',
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Fitur Kuis akan segera hadir'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.assignment_outlined,
+                    title: 'Tugas',
+                    routeKey: 'tugas',
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Fitur Tugas akan segera hadir'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            _buildDrawerItem(
-              context: context,
-              icon: Icons.class_,
-              title: 'Kelasku',
-              isActive: activeRoute == classRoute,
-              onTap: () {
-                 Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => getTutorClassPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            _buildDrawerItem(
-              context: context,
-              icon: Icons.question_mark,
-              title: 'Kuis',
-              isActive: activeRoute == quizRoute,
-              onTap: () {
-                 Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => getTutorQuizPage()),
-                );
-              },
+
+            // Footer
+            const Padding(
+              padding: EdgeInsets.all(24.0),
+              child: Text(
+                "Versi 1.0.0",
+                style: TextStyle(color: Colors.white38, fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -88,24 +135,55 @@ class TutorAppDrawer extends StatelessWidget {
     );
   }
 
+  void _navigateTo(BuildContext context, String routeKey, Widget page) {
+    Navigator.pop(context);
+    if (activeRoute != routeKey) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => page),
+      );
+    }
+  }
+
   Widget _buildDrawerItem({
     required BuildContext context,
     required IconData icon,
     required String title,
-    required bool isActive,
+    required String routeKey,
     required VoidCallback onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isActive ? accentOrange : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          leading: Icon(icon, color: Colors.white),
-          title: Text(title, style: const TextStyle(color: Colors.white)),
+    final isActive = activeRoute == routeKey;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isActive ? accentOrange : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 22),
+                const SizedBox(width: 16),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

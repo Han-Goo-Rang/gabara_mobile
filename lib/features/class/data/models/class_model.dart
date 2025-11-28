@@ -7,8 +7,11 @@ class ClassModel extends ClassEntity {
     required super.description,
     required super.subjectName,
     required super.tutorName,
+    super.classCode,
     required super.maxStudents,
     required super.isActive,
+    super.subjectId,
+    super.createdAt,
   });
 
   factory ClassModel.fromJson(Map<String, dynamic> json) {
@@ -16,17 +19,19 @@ class ClassModel extends ClassEntity {
       id: json['id'] ?? '',
       name: json['name'] ?? 'Tanpa Nama',
       description: json['description'] ?? '',
-      // Mengambil data nested dari relasi Supabase
-      // subjects: { name: "Matematika" }
-      subjectName: (json['subjects'] != null) 
-          ? json['subjects']['name'] 
+      subjectName: (json['subjects'] != null)
+          ? json['subjects']['name'] ?? 'Umum'
           : 'Umum',
-      // tutor: { full_name: "Budi Santoso" }
-      tutorName: (json['tutor'] != null) 
-          ? json['tutor']['full_name'] 
-          : 'Admin', 
-      maxStudents: json['max_students'] ?? 0,
-      isActive: json['is_active'] ?? false,
+      subjectId: json['subject_id'],
+      tutorName: (json['tutor'] != null)
+          ? json['tutor']['full_name'] ?? 'Mentor'
+          : 'Mentor',
+      classCode: json['class_code'],
+      maxStudents: json['max_students'] ?? 30,
+      isActive: json['is_active'] ?? true,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
     );
   }
 
@@ -35,10 +40,10 @@ class ClassModel extends ClassEntity {
       'id': id,
       'name': name,
       'description': description,
-      // Kita tidak simpan subjectName/tutorName saat create, 
-      // tapi pakai ID (logic ada di Service)
+      'class_code': classCode,
       'max_students': maxStudents,
       'is_active': isActive,
+      'subject_id': subjectId,
     };
   }
 }

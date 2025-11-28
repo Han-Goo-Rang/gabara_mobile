@@ -3,9 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../presentation/providers/class_provider.dart';
 import '../../presentation/widgets/class_card.dart';
-import '../../../profile/presentation/providers/profile_provider.dart';
+import '../../domain/entities/class_entity.dart';
 import '../../../../core/constants/app_colors.dart';
-// Import Halaman Profile dan Drawer
 import '../../../../presentation/pages/profile_page.dart';
 import '../../../../presentation/layout/student_app_drawer.dart';
 import '../../../../presentation/layout/tutor_app_drawer.dart';
@@ -24,9 +23,16 @@ class _ClassPageState extends State<ClassPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => Provider.of<ClassProvider>(context, listen: false).fetchClasses(),
-    );
+    Future.microtask(() {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final classProvider = Provider.of<ClassProvider>(context, listen: false);
+
+      if (authProvider.user?.role == 'mentor') {
+        classProvider.fetchMyClasses();
+      } else {
+        classProvider.fetchClasses();
+      }
+    });
   }
 
   @override
@@ -38,9 +44,11 @@ class _ClassPageState extends State<ClassPage> {
   void _showEnrollDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -52,14 +60,17 @@ class _ClassPageState extends State<ClassPage> {
                   children: [
                     const Text(
                       "Bergabung ke Kelas",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(dialogContext),
                       icon: const Icon(Icons.close, color: Colors.grey),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                    )
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -70,6 +81,7 @@ class _ClassPageState extends State<ClassPage> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _enrollCodeController,
+                  textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     hintText: "Masukkan kode kelas",
                     hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -81,7 +93,10 @@ class _ClassPageState extends State<ClassPage> {
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -89,11 +104,13 @@ class _ClassPageState extends State<ClassPage> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(dialogContext),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.black54,
                           side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: const Text("Batal"),
@@ -104,22 +121,33 @@ class _ClassPageState extends State<ClassPage> {
                       child: ElevatedButton(
                         onPressed: () async {
                           if (_enrollCodeController.text.isNotEmpty) {
-                            final success = await context.read<ClassProvider>().joinClass(_enrollCodeController.text);
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              if (success) {
-                                _enrollCodeController.clear();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Berhasil bergabung ke kelas!"), backgroundColor: Colors.green),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(context.read<ClassProvider>().errorMessage ?? "Gagal bergabung"),
-                                    backgroundColor: Colors.red,
+                            final classProvider = context.read<ClassProvider>();
+                            final success = await classProvider.joinClass(
+                              _enrollCodeController.text,
+                            );
+
+                            if (!dialogContext.mounted) return;
+                            Navigator.pop(dialogContext);
+
+                            if (!context.mounted) return;
+                            if (success) {
+                              _enrollCodeController.clear();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Berhasil bergabung ke kelas!"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    classProvider.errorMessage ??
+                                        "Gagal bergabung",
                                   ),
-                                );
-                              }
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
                             }
                           }
                         },
@@ -127,10 +155,15 @@ class _ClassPageState extends State<ClassPage> {
                           backgroundColor: accentBlue,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: const Text("Bergabung", style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          "Bergabung",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ],
@@ -138,6 +171,52 @@ class _ClassPageState extends State<ClassPage> {
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, ClassEntity classEntity) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Hapus Kelas'),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus kelas "${classEntity.name}"?\n\nSemua data terkait kelas ini akan dihapus permanen.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final classProvider = context.read<ClassProvider>();
+                final success = await classProvider.deleteClass(classEntity.id);
+
+                if (!dialogContext.mounted) return;
+                Navigator.pop(dialogContext);
+
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Kelas berhasil dihapus'
+                          : 'Gagal menghapus kelas',
+                    ),
+                    backgroundColor: success ? Colors.green : Colors.red,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         );
       },
     );
@@ -152,7 +231,6 @@ class _ClassPageState extends State<ClassPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
-      // Sidebar Drawer
       drawer: isMentor
           ? const TutorAppDrawer(activeRoute: 'class')
           : const StudentAppDrawer(activeRoute: 'class'),
@@ -166,59 +244,92 @@ class _ClassPageState extends State<ClassPage> {
         title: Image.asset('assets/GabaraColor.png', height: 28),
         centerTitle: true,
         actions: [
-          if (!isMentor)
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: SizedBox(
-                height: 36,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showEnrollDialog(context),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text("Enroll"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentBlue, // Warna biru sesuai mockup
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8), // Sedikit rounded
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                ),
-              ),
-            ),
-          _buildProfilePopupMenu(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: _buildProfilePopupMenu(context),
+          ),
         ],
       ),
       floatingActionButton: isMentor
           ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.pushNamed(context, '/create-class');
-              },
+              onPressed: () => Navigator.pushNamed(context, '/create-class'),
               label: const Text('Buat Kelas'),
               icon: const Icon(Icons.add),
               backgroundColor: accentBlue,
             )
           : null,
       body: RefreshIndicator(
-        onRefresh: () => classProvider.fetchClasses(),
+        onRefresh: () => isMentor
+            ? classProvider.fetchMyClasses()
+            : classProvider.fetchClasses(),
         child: classProvider.isLoading
             ? const Center(child: CircularProgressIndicator())
             : classProvider.classes.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: classProvider.classes.length,
-                    itemBuilder: (context, index) {
-                      final classItem = classProvider.classes[index];
-                      return ClassCard(classEntity: classItem);
-                    },
-                  ),
+            ? _buildEmptyState(isMentor)
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                itemCount: classProvider.classes.length + 1, // +1 untuk header
+                itemBuilder: (context, index) {
+                  // Header
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16, top: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Kelas',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          if (!isMentor)
+                            ElevatedButton.icon(
+                              onPressed: () => _showEnrollDialog(context),
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text("Enroll"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accentBlue,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }
+                  // Class Cards
+                  final classItem = classProvider.classes[index - 1];
+                  return ClassCard(
+                    classEntity: classItem,
+                    isMentor: isMentor,
+                    onEdit: isMentor
+                        ? () => Navigator.pushNamed(
+                            context,
+                            '/edit-class',
+                            arguments: classItem,
+                          )
+                        : null,
+                    onDelete: isMentor
+                        ? () => _showDeleteConfirmation(context, classItem)
+                        : null,
+                  );
+                },
+              ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isMentor) {
     return Center(
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -227,15 +338,55 @@ class _ClassPageState extends State<ClassPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Header dengan tombol Enroll untuk student
+              if (!isMentor)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Kelas',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _showEnrollDialog(context),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text("Enroll"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accentBlue,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Image.asset(
                 'assets/kosong.png',
-                height: 220,
+                height: 200,
                 fit: BoxFit.contain,
+                errorBuilder: (ctx, err, stack) => Icon(
+                  Icons.school_outlined,
+                  size: 120,
+                  color: Colors.grey.shade300,
+                ),
               ),
-              const SizedBox(height: 32),
-              const Text(
-                "Tidak ada kelas yang di enroll",
-                style: TextStyle(
+              const SizedBox(height: 24),
+              Text(
+                isMentor ? "Belum ada kelas" : "Tidak ada kelas yang di enroll",
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -243,11 +394,13 @@ class _ClassPageState extends State<ClassPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
-                  "Silahkan enroll dengan meminta kode kelas kepada tutor pribadi !",
-                  style: TextStyle(
+                  isMentor
+                      ? "Buat kelas pertama Anda dengan menekan tombol 'Buat Kelas' di bawah"
+                      : "Silahkan enroll dengan meminta kode kelas kepada tutor pribadi!",
+                  style: const TextStyle(
                     fontSize: 14,
                     color: Colors.grey,
                     height: 1.5,
@@ -271,7 +424,10 @@ class _ClassPageState extends State<ClassPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (value) {
         if (value == 'edit_profile') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfilePage()),
+          );
         } else if (value == 'logout') {
           Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
           authProvider.logout();
@@ -286,14 +442,26 @@ class _ClassPageState extends State<ClassPage> {
               CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.grey.shade200,
-                child: Text(user?.name[0] ?? 'U', style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+                child: Text(
+                  user?.name[0] ?? 'U',
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user?.name ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(authProvider.user?.role ?? 'Student', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    user?.name ?? 'User',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    authProvider.user?.role ?? 'Student',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
             ],
@@ -302,11 +470,23 @@ class _ClassPageState extends State<ClassPage> {
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
           value: 'edit_profile',
-          child: Row(children: [Icon(Icons.person_outline, size: 20), SizedBox(width: 12), Text('Edit Profil')]),
+          child: Row(
+            children: [
+              Icon(Icons.person_outline, size: 20),
+              SizedBox(width: 12),
+              Text('Edit Profil'),
+            ],
+          ),
         ),
         const PopupMenuItem<String>(
           value: 'logout',
-          child: Row(children: [Icon(Icons.logout, size: 20, color: Colors.red), SizedBox(width: 12), Text('Keluar', style: TextStyle(color: Colors.red))]),
+          child: Row(
+            children: [
+              Icon(Icons.logout, size: 20, color: Colors.red),
+              SizedBox(width: 12),
+              Text('Keluar', style: TextStyle(color: Colors.red)),
+            ],
+          ),
         ),
       ],
     );
