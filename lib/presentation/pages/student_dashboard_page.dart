@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../layout/student_app_drawer.dart';
 import 'profile_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/class/presentation/providers/class_provider.dart';
 
 const double containerPadding = 16.0;
 const double containerMargin = 16.0;
@@ -26,10 +27,20 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<AuthProvider>(context);
+  void initState() {
+    super.initState();
+    // Fetch enrolled classes untuk student
+    Future.microtask(() {
+      Provider.of<ClassProvider>(context, listen: false).fetchClasses();
+    });
+  }
 
-    if (provider.user == null) {
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final classProvider = Provider.of<ClassProvider>(context);
+
+    if (authProvider.user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/login');
@@ -37,6 +48,8 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    final enrolledClassCount = classProvider.classes.length;
 
     return Scaffold(
       key: _scaffoldKey,
@@ -50,52 +63,67 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
         centerTitle: true,
         actions: [_buildProfilePopupMenu()],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: containerMargin),
-              child: _buildWelcomeSection(context),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: containerMargin),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      icon: Icons.book,
-                      title: 'Kelas Diikuti',
-                      count: '0',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      icon: Icons.assignment_turned_in_outlined,
-                      title: 'Tugas Berjalan',
-                      count: '0',
-                    ),
-                  ),
-                ],
+      body: RefreshIndicator(
+        onRefresh: () => classProvider.fetchClasses(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: containerMargin,
+                ),
+                child: _buildWelcomeSection(context),
               ),
-            ),
-            const SizedBox(height: 16),
-            _buildSectionTitle(
-              'Pengumuman',
-              padding: const EdgeInsets.symmetric(horizontal: containerMargin),
-            ),
-            _buildSectionWrapper(child: _buildAnnouncementSection()),
-            const SizedBox(height: 16),
-            _buildSectionTitle(
-              'Daftar Deadline Tugas/Quiz',
-              padding: const EdgeInsets.symmetric(horizontal: containerMargin),
-            ),
-            _buildSectionWrapper(child: _buildDeadlineSection()),
-            const SizedBox(height: 80),
-          ],
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: containerMargin,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildSummaryCard(
+                        icon: Icons.book,
+                        title: 'Kelas Diikuti',
+                        count: classProvider.isLoading
+                            ? '-'
+                            : '$enrolledClassCount',
+                        onTap: () => Navigator.pushNamed(context, '/class'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildSummaryCard(
+                        icon: Icons.assignment_turned_in_outlined,
+                        title: 'Tugas Berjalan',
+                        count: '0', // TODO: Implementasi nanti
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSectionTitle(
+                'Pengumuman',
+                padding: const EdgeInsets.symmetric(
+                  horizontal: containerMargin,
+                ),
+              ),
+              _buildSectionWrapper(child: _buildAnnouncementSection()),
+              const SizedBox(height: 16),
+              _buildSectionTitle(
+                'Daftar Deadline Tugas/Quiz',
+                padding: const EdgeInsets.symmetric(
+                  horizontal: containerMargin,
+                ),
+              ),
+              _buildSectionWrapper(child: _buildDeadlineSection()),
+              const SizedBox(height: 80),
+            ],
+          ),
         ),
       ),
     );
@@ -206,6 +234,7 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
     required IconData icon,
     required String title,
     required String count,
+    VoidCallback? onTap,
   }) {
     return Card(
       elevation: 1,
@@ -213,30 +242,37 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(containerPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: accentBlue.withAlpha(26),
-                borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Padding(
+          padding: const EdgeInsets.all(containerPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: accentBlue.withAlpha(26),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: accentBlue, size: 24),
               ),
-              child: Icon(icon, color: accentBlue, size: 24),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, color: Colors.black54),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              count,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                count,
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

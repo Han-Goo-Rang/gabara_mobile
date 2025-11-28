@@ -1,27 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/class_provider.dart';
+import '../../domain/entities/class_entity.dart';
 import '../../../../core/constants/app_colors.dart';
 
-class CreateClassPage extends StatefulWidget {
-  const CreateClassPage({super.key});
+class EditClassPage extends StatefulWidget {
+  final ClassEntity classEntity;
+
+  const EditClassPage({super.key, required this.classEntity});
 
   @override
-  State<CreateClassPage> createState() => _CreateClassPageState();
+  State<EditClassPage> createState() => _EditClassPageState();
 }
 
-class _CreateClassPageState extends State<CreateClassPage> {
+class _EditClassPageState extends State<EditClassPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
-  final TextEditingController _maxStudentsController = TextEditingController(
-    text: '30',
-  );
+  late TextEditingController _nameController;
+  late TextEditingController _descController;
+  late TextEditingController _maxStudentsController;
   int? _selectedSubjectId;
 
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController(text: widget.classEntity.name);
+    _descController = TextEditingController(
+      text: widget.classEntity.description,
+    );
+    _maxStudentsController = TextEditingController(
+      text: widget.classEntity.maxStudents.toString(),
+    );
+    _selectedSubjectId = widget.classEntity.subjectId;
+
     Future.microtask(
       () => Provider.of<ClassProvider>(context, listen: false).fetchSubjects(),
     );
@@ -42,7 +52,7 @@ class _CreateClassPageState extends State<CreateClassPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buat Kelas Baru'),
+        title: const Text('Edit Kelas'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -54,27 +64,44 @@ class _CreateClassPageState extends State<CreateClassPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Info
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.info_outline, color: accentBlue),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Kode kelas akan dibuat otomatis setelah kelas berhasil dibuat.',
-                        style: TextStyle(fontSize: 13, color: Colors.black87),
-                      ),
+              // Kode Kelas (Read-only)
+              if (widget.classEntity.classCode != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: accentBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: accentBlue.withValues(alpha: 0.3),
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.key, color: accentBlue),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Kode Kelas',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Text(
+                            widget.classEntity.classCode!,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: accentBlue,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
 
               // Nama Kelas
               TextFormField(
@@ -151,7 +178,7 @@ class _CreateClassPageState extends State<CreateClassPage> {
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _handleCreate,
+                  onPressed: isLoading ? null : _handleUpdate,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentBlue,
                     foregroundColor: Colors.white,
@@ -162,7 +189,7 @@ class _CreateClassPageState extends State<CreateClassPage> {
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          'Buat Kelas',
+                          'Simpan Perubahan',
                           style: TextStyle(fontSize: 16),
                         ),
                 ),
@@ -174,11 +201,12 @@ class _CreateClassPageState extends State<CreateClassPage> {
     );
   }
 
-  Future<void> _handleCreate() async {
+  Future<void> _handleUpdate() async {
     if (!_formKey.currentState!.validate()) return;
 
     final classProvider = context.read<ClassProvider>();
-    final success = await classProvider.createClass(
+    final success = await classProvider.updateClass(
+      classId: widget.classEntity.id,
       name: _nameController.text,
       description: _descController.text,
       subjectId: _selectedSubjectId!,
@@ -191,14 +219,16 @@ class _CreateClassPageState extends State<CreateClassPage> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Kelas berhasil dibuat!'),
+          content: Text('Kelas berhasil diperbarui!'),
           backgroundColor: Colors.green,
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(classProvider.errorMessage ?? 'Gagal membuat kelas'),
+          content: Text(
+            classProvider.errorMessage ?? 'Gagal memperbarui kelas',
+          ),
           backgroundColor: Colors.red,
         ),
       );

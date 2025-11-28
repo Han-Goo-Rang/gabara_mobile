@@ -8,7 +8,7 @@ class ClassProvider extends ChangeNotifier {
   ClassProvider(this.classService);
 
   List<ClassModel> _classes = [];
-  List<Map<String, dynamic>> _subjects = []; // Data untuk dropdown mapel
+  List<Map<String, dynamic>> _subjects = [];
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -17,14 +17,14 @@ class ClassProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // 1. AMBIL DATA KELAS
+  // Fetch enrolled classes (for student)
   Future<void> fetchClasses() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _classes = await classService.getClasses();
+      _classes = await classService.getEnrolledClasses();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -33,18 +33,31 @@ class ClassProvider extends ChangeNotifier {
     }
   }
 
-  // 2. AMBIL DATA SUBJECTS (Dipanggil saat mau bikin kelas)
+  // Fetch classes created by mentor
+  Future<void> fetchMyClasses() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _classes = await classService.getMyClasses();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchSubjects() async {
     try {
       _subjects = await classService.getSubjects();
       notifyListeners();
     } catch (e) {
-      // Error silent saja untuk dropdown, atau bisa di log
       debugPrint("Gagal ambil subjects: $e");
     }
   }
 
-  // 3. BUAT KELAS BARU
   Future<bool> createClass({
     required String name,
     required String description,
@@ -62,13 +75,78 @@ class ClassProvider extends ChangeNotifier {
         subjectId: subjectId,
         maxStudents: maxStudents,
       );
-      
-      // Refresh data kelas setelah berhasil membuat
-      await fetchClasses(); 
+      // Refresh kelas mentor setelah create
+      await fetchMyClasses();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      _isLoading = false; // Stop loading biar user bisa coba lagi
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Update class
+  Future<bool> updateClass({
+    required String classId,
+    required String name,
+    required String description,
+    required int subjectId,
+    required int maxStudents,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await classService.updateClass(
+        classId: classId,
+        name: name,
+        description: description,
+        subjectId: subjectId,
+        maxStudents: maxStudents,
+      );
+      await fetchMyClasses();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Delete class
+  Future<bool> deleteClass(String classId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await classService.deleteClass(classId);
+      await fetchMyClasses();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Join class by code (for student)
+  Future<bool> joinClass(String classCode) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await classService.joinClass(classCode);
+      await fetchClasses();
+      return true;
+    } catch (e) {
+      _errorMessage = "Kode kelas tidak valid atau sudah bergabung.";
+      _isLoading = false;
       notifyListeners();
       return false;
     }
