@@ -3,7 +3,7 @@ import '../../domain/entities/class_entity.dart';
 
 class ClassCard extends StatelessWidget {
   final ClassEntity classEntity;
-  final VoidCallback? onTap; // Agar kartu bisa diklik
+  final VoidCallback? onTap; // Callback onTap
 
   const ClassCard({
     super.key, 
@@ -18,7 +18,15 @@ class ClassCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: onTap,
+        // Gunakan onTap yang dilempar dari parent, atau navigasi default
+        onTap: onTap ?? () {
+          // Navigasi default ke halaman detail dengan argumen classEntity
+          Navigator.pushNamed(
+            context, 
+            '/class-detail',
+            arguments: classEntity, // Kirim object classEntity
+          );
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -37,7 +45,7 @@ class ClassCard extends StatelessWidget {
                       border: Border.all(color: Colors.blue.shade100),
                     ),
                     child: Text(
-                      classEntity.subjectName, // Menampilkan Mapel
+                      classEntity.subjectName,
                       style: TextStyle(color: Colors.blue.shade800, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -63,7 +71,7 @@ class ClassCard extends StatelessWidget {
                   const Icon(Icons.person_outline, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    classEntity.tutorName, // Menampilkan Tutor
+                    classEntity.tutorName,
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
@@ -76,7 +84,7 @@ class ClassCard extends StatelessWidget {
                   const Icon(Icons.group, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    '${classEntity.maxStudents} siswa max', // Menampilkan max siswa
+                    '${classEntity.maxStudents} siswa max',
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],

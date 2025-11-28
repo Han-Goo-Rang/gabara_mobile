@@ -8,7 +8,7 @@ class ClassProvider extends ChangeNotifier {
   ClassProvider(this.classService);
 
   List<ClassModel> _classes = [];
-  List<Map<String, dynamic>> _subjects = []; // Data untuk dropdown mapel
+  List<Map<String, dynamic>> _subjects = [];
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -17,7 +17,6 @@ class ClassProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // 1. AMBIL DATA KELAS
   Future<void> fetchClasses() async {
     _isLoading = true;
     _errorMessage = null;
@@ -33,18 +32,15 @@ class ClassProvider extends ChangeNotifier {
     }
   }
 
-  // 2. AMBIL DATA SUBJECTS (Dipanggil saat mau bikin kelas)
   Future<void> fetchSubjects() async {
     try {
       _subjects = await classService.getSubjects();
       notifyListeners();
     } catch (e) {
-      // Error silent saja untuk dropdown, atau bisa di log
       debugPrint("Gagal ambil subjects: $e");
     }
   }
 
-  // 3. BUAT KELAS BARU
   Future<bool> createClass({
     required String name,
     required String description,
@@ -62,13 +58,29 @@ class ClassProvider extends ChangeNotifier {
         subjectId: subjectId,
         maxStudents: maxStudents,
       );
-      
-      // Refresh data kelas setelah berhasil membuat
       await fetchClasses(); 
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      _isLoading = false; // Stop loading biar user bisa coba lagi
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // --- FUNGSI BARU: JOIN CLASS ---
+  Future<bool> joinClass(String classCode) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await classService.joinClass(classCode);
+      await fetchClasses(); // Refresh list kelas setelah join
+      return true;
+    } catch (e) {
+      _errorMessage = "Kode kelas tidak valid atau sudah bergabung.";
+      _isLoading = false;
       notifyListeners();
       return false;
     }
