@@ -431,3 +431,75 @@ CREATE POLICY "Tutors and Admins can delete classes" ON classes
 ### Status
 
 ✅ Fixed - Delete kelas sekarang menggunakan soft delete
+
+---
+
+## Update: Refactor Mentor Dashboard - Data Dinamis
+
+**Tanggal:** 28 November 2025
+
+### Perubahan pada `mentor_dashboard_page.dart`
+
+| Elemen          | Sebelum         | Sesudah                         |
+| --------------- | --------------- | ------------------------------- |
+| Kelas Dibuat    | Hardcoded "0"   | Data dari `ClassProvider`       |
+| Summary Card    | Tidak clickable | Clickable, navigasi ke `/class` |
+| Pengumuman      | Section statis  | Diganti dengan "Kelas Terbaru"  |
+| Kelas Terbaru   | Tidak ada       | Menampilkan 3 kelas terbaru     |
+| Pull-to-refresh | Tidak ada       | Ditambahkan                     |
+
+### Fitur Baru
+
+1. **Kelas Terbaru** - Menampilkan 3 kelas terbaru dengan:
+
+   - Nama kelas
+   - Mata pelajaran
+   - Kode kelas
+   - Tap untuk ke detail kelas
+
+2. **Summary Card Clickable** - Card "Kelas Dibuat" bisa di-tap untuk navigasi ke halaman kelas
+
+3. **Pull-to-refresh** - Dashboard bisa di-refresh untuk update data
+
+### Layout Dashboard Mentor
+
+```
+┌─────────────────────────────────────┐
+│ ☰  [GARASI BELAJAR LOGO]        ⋮  │
+├─────────────────────────────────────┤
+│ Selamat datang, [Nama]              │
+│ Mentor                              │
+├─────────────────────────────────────┤
+│ ┌───────────┐  ┌───────────┐        │
+│ │ 📚        │  │ ❓        │        │
+│ │ Kelas     │  │ Kuis      │        │
+│ │ Dibuat    │  │ Dibuat    │        │
+│ │ [N]       │  │ 0         │        │
+│ └───────────┘  └───────────┘        │
+│ ┌───────────┐  ┌───────────┐        │
+│ │ 📝        │  │ 👥        │        │
+│ │ Tugas     │  │ Total     │        │
+│ │ Dibuat    │  │ Siswa     │        │
+│ │ 0         │  │ 0         │        │
+│ └───────────┘  └───────────┘        │
+├─────────────────────────────────────┤
+│ Kelas Terbaru                       │
+│ ┌─────────────────────────────────┐ │
+│ │ 📚 Matematika Dasar    [ABC123] │ │
+│ │    Matematika                   │ │
+│ └─────────────────────────────────┘ │
+│ ┌─────────────────────────────────┐ │
+│ │ 📚 Bahasa Indonesia    [XYZ789] │ │
+│ │    Bahasa Indonesia             │ │
+│ └─────────────────────────────────┘ │
+│         [Lihat Semua Kelas]         │
+├─────────────────────────────────────┤
+│ Tugas yang Perlu Dinilai            │
+│ Tidak ada tugas yang perlu dinilai  │
+└─────────────────────────────────────┘
+                              [+ Buat Kelas]
+```
+
+### Status
+
+✅ Selesai - Dashboard mentor sekarang menampilkan data dinamis

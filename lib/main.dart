@@ -14,6 +14,17 @@ import 'features/class/data/services/class_service.dart';
 import 'features/class/presentation/providers/class_provider.dart';
 import 'features/class/domain/entities/class_entity.dart'; // Import entity
 
+// Import Layer Data, Domain, Presentation - QUIZ
+import 'features/quiz/data/services/quiz_service.dart';
+import 'features/quiz/data/services/student_quiz_service.dart';
+import 'features/quiz/presentation/providers/quiz_provider.dart';
+import 'features/quiz/presentation/providers/student_quiz_provider.dart';
+import 'features/quiz/presentation/pages/quiz_list_page.dart';
+import 'features/quiz/presentation/pages/quiz_builder_page.dart';
+import 'features/quiz/presentation/pages/quiz_detail_page.dart';
+import 'features/quiz/presentation/pages/student_quiz_detail_page.dart';
+import 'features/quiz/presentation/pages/student_quiz_result_page.dart';
+
 // Import Layer Data, Domain, Presentation - PROFILE
 import 'features/profile/data/services/profile_service.dart';
 import 'features/profile/data/repositories/profile_repository_impl.dart';
@@ -63,6 +74,10 @@ class MyApp extends StatelessWidget {
     // --- CLASS DEPENDENCIES ---
     final classService = ClassService(supabaseClient);
 
+    // --- QUIZ DEPENDENCIES ---
+    final quizService = QuizService(supabaseClient);
+    final studentQuizService = StudentQuizService(supabaseClient);
+
     // --- PROFILE DEPENDENCIES ---
     final profileService = ProfileService(supabaseClient);
     final profileRepository = ProfileRepositoryImpl(profileService);
@@ -77,6 +92,10 @@ class MyApp extends StatelessWidget {
               AuthProvider(loginUser: loginUser, registerUser: registerUser),
         ),
         ChangeNotifierProvider(create: (_) => ClassProvider(classService)),
+        ChangeNotifierProvider(create: (_) => QuizProvider(quizService)),
+        ChangeNotifierProvider(
+          create: (_) => StudentQuizProvider(studentQuizService),
+        ),
         ChangeNotifierProvider(
           create: (_) => ProfileProvider(
             getProfileUseCase: getProfile,
@@ -99,6 +118,8 @@ class MyApp extends StatelessWidget {
           '/admin-dashboard': (context) => const AdminDashboardPage(),
           '/class': (context) => const ClassPage(),
           '/create-class': (context) => const CreateClassPage(),
+          '/quiz': (context) => const QuizListPage(),
+          '/quiz/create': (context) => const QuizBuilderPage(),
         },
         // Menggunakan onGenerateRoute untuk passing arguments
         onGenerateRoute: (settings) {
@@ -112,6 +133,28 @@ class MyApp extends StatelessWidget {
             final args = settings.arguments as ClassEntity;
             return MaterialPageRoute(
               builder: (context) => EditClassPage(classEntity: args),
+            );
+          }
+          if (settings.name == '/quiz/detail') {
+            final quizId = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (context) => QuizDetailPage(quizId: quizId),
+            );
+          }
+          // Student Quiz Routes
+          if (settings.name == '/student/quiz/detail') {
+            final quizId = settings.arguments as String;
+            return MaterialPageRoute(
+              settings: const RouteSettings(name: '/student/quiz/detail'),
+              builder: (context) => StudentQuizDetailPage(quizId: quizId),
+            );
+          }
+          if (settings.name == '/quiz/result') {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (context) => StudentQuizResultPage(
+                attemptId: args['attemptId'] as String?,
+              ),
             );
           }
           return null;

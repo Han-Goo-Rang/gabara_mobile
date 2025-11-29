@@ -56,7 +56,6 @@ class ClassService {
             'id, name, description, class_code, max_students, is_active, created_at, tutor_id, subject_id, subjects(name)',
           )
           .eq('tutor_id', user.id)
-          .eq('is_active', true) // Hanya ambil kelas aktif
           .order('created_at', ascending: false);
 
       final List<dynamic> data = response as List<dynamic>;
@@ -163,24 +162,40 @@ class ClassService {
         .eq('tutor_id', user.id);
   }
 
-  // Delete class (soft delete - set is_active = false)
-  // Note: Hard delete memerlukan RLS policy update di Supabase
+  // Delete class (hard delete)
   Future<void> deleteClass(String classId) async {
     final user = supabaseClient.auth.currentUser;
     if (user == null) throw Exception('User tidak login');
 
-    // Soft delete: set is_active = false
-    final response = await supabaseClient
-        .from('classes')
-        .update({'is_active': false})
-        .eq('id', classId)
-        .eq('tutor_id', user.id)
-        .select();
+    debugPrint('=== DELETE CLASS ===');
+    debugPrint('Class ID: $classId');
+    debugPrint('User ID: ${user.id}');
 
-    if ((response as List).isEmpty) {
-      throw Exception(
-        'Gagal menghapus kelas. Pastikan Anda adalah pemilik kelas ini.',
-      );
+    try {
+      // Verifikasi kelas ada dan milik user ini
+      final existingClass = await supabaseClient
+          .from('classes')
+          .select('id, tutor_id, name')
+          .eq('id', classId)
+          .maybeSingle();
+
+      debugPrint('Existing class: $existingClass');
+
+      if (existingClass == null) {
+        throw Exception('Kelas tidak ditemukan');
+      }
+
+      if (existingClass['tutor_id'] != user.id) {
+        throw Exception('Anda bukan pemilik kelas ini');
+      }
+
+      // Hard delete - tanpa filter tutor_id karena sudah diverifikasi
+      await supabaseClient.from('classes').delete().eq('id', classId);
+
+      debugPrint('Class "${existingClass['name']}" deleted successfully');
+    } catch (e) {
+      debugPrint('Error deleting class: $e');
+      rethrow;
     }
   }
 
