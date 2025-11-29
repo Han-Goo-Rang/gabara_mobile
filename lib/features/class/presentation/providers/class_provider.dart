@@ -122,11 +122,16 @@ class ClassProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    debugPrint('ClassProvider: Deleting class $classId');
+
     try {
       await classService.deleteClass(classId);
+      debugPrint('ClassProvider: Delete successful, refreshing list');
       await fetchMyClasses();
+      debugPrint('ClassProvider: List refreshed, count: ${_classes.length}');
       return true;
     } catch (e) {
+      debugPrint('ClassProvider: Delete failed - $e');
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();

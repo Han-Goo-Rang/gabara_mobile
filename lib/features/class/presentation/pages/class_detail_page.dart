@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../domain/entities/class_entity.dart';
 import '../widgets/class_tabs_dummy.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class ClassDetailPage extends StatefulWidget {
   final ClassEntity classEntity;
@@ -26,6 +28,11 @@ class _ClassDetailPageState extends State<ClassDetailPage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  bool _isMentor(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    return authProvider.user?.role == 'mentor';
   }
 
   @override
@@ -131,11 +138,14 @@ class _ClassDetailPageState extends State<ClassDetailPage>
         },
         body: TabBarView(
           controller: _tabController,
-          children: const [
-            ClassCourseTab(),
-            ClassParticipantsTab(),
-            ClassDiscussionTab(),
-            ClassGradesTab(),
+          children: [
+            ClassCourseTab(
+              classId: widget.classEntity.id,
+              isMentor: _isMentor(context),
+            ),
+            ClassParticipantsTab(classId: widget.classEntity.id),
+            ClassDiscussionTab(classId: widget.classEntity.id),
+            ClassGradesTab(classId: widget.classEntity.id),
           ],
         ),
       ),

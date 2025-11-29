@@ -1,8 +1,7 @@
 // lib/features/quiz/presentation/pages/edit_quiz_page.dart
+// This page is for students to take a quiz (answer questions)
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../domain/entities/quiz_entity.dart';
-import '../providers/quiz_provider.dart';
 import '../widgets/quiz_option_widget.dart';
 import 'quiz_result_page.dart';
 
@@ -24,18 +23,16 @@ class _EditQuizPageState extends State<EditQuizPage> {
   }
 
   Future<void> _submit() async {
-    final prov = context.read<QuizProvider>();
-    final ok = await prov.submit(widget.quiz.id, selectedAnswers);
+    // TODO: Implement submit to backend when student feature is ready
     if (!mounted) return;
-    
-    if (ok) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => QuizResultPage(quiz: widget.quiz, answers: selectedAnswers)),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal submit jawaban')));
-    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            QuizResultPage(quiz: widget.quiz, answers: selectedAnswers),
+      ),
+    );
   }
 
   @override
@@ -50,12 +47,9 @@ class _EditQuizPageState extends State<EditQuizPage> {
             Text(widget.quiz.description),
             const SizedBox(height: 12),
             ...questions.map((q) {
-              // Try to handle both QuestionModel or QuestionEntity
-              final questionId = (q is Map) ? q['id'].toString() : (q as dynamic).id.toString();
-              final questionText = (q is Map) ? q['question'].toString() : (q as dynamic).question.toString();
-              final options = (q is Map)
-                  ? (q['options'] as List<dynamic>).cast<Map<String, dynamic>>()
-                  : (q as dynamic).options as List<dynamic>;
+              final questionId = q.id;
+              final questionText = q.question;
+              final options = q.options;
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8),
@@ -64,11 +58,14 @@ class _EditQuizPageState extends State<EditQuizPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(questionText, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        questionText,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       ...options.map((opt) {
-                        final optId = (opt is Map) ? opt['id'].toString() : (opt as dynamic).id.toString();
-                        final optText = (opt is Map) ? opt['text'].toString() : (opt as dynamic).text.toString();
+                        final optId = opt.id;
+                        final optText = opt.text;
                         return QuizOptionWidget(
                           optionId: optId,
                           text: optText,
@@ -85,7 +82,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
             ElevatedButton(
               onPressed: selectedAnswers.isEmpty ? null : _submit,
               child: const Text('Submit Jawaban'),
-            )
+            ),
           ],
         ),
       ),

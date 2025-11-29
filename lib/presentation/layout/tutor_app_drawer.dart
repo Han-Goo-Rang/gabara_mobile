@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../pages/mentor_dashboard_page.dart';
 import '../../features/class/presentation/pages/class_page.dart';
+import '../../features/quiz/presentation/pages/quiz_list_page.dart';
 
 class TutorAppDrawer extends StatelessWidget {
   final String? activeRoute;
@@ -91,15 +92,8 @@ class TutorAppDrawer extends StatelessWidget {
                     icon: Icons.quiz_outlined,
                     title: 'Kuis',
                     routeKey: 'quiz',
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Fitur Kuis akan segera hadir'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    onTap: () =>
+                        _navigateTo(context, 'quiz', const QuizListPage()),
                   ),
                   const SizedBox(height: 12),
                   _buildDrawerItem(
